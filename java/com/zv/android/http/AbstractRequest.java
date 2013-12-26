@@ -200,6 +200,12 @@ public abstract class AbstractRequest
 
 			return this;
 		}
+		
+		public Builder<TRequest> method(String method)
+		{
+			request.method = method;
+			return this;
+		}
 
 		public Builder<TRequest> header(String name, String...values)
 		{

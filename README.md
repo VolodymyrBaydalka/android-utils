@@ -3,6 +3,48 @@ android-utils
 
 Helper classes to build android applications
 
+http package
+=============
+Most useful thing there is request builder.
+###exemple: 
+```java
+WebRequest.builder()
+	.target("www.google.com")
+	.handler(Handlers.STRING)
+	.onAny(new Callback<String>()
+		{ 
+			@Override
+			public void on(String value, Throwable error)
+			{
+				Log.i(value);
+			}
+		})
+	.async();
+```
+###reference:
+```
+	WebRequest.builder() - creation
+	.scheme(String) - sets url scheme (default - http)
+	.target(String) - sets middle part of url (domain, port)
+	.path(String) - appends path part
+	.query(String,String) - adds queriy name-value pair to url
+	.method(String) - sets request method (default - GET)
+	.header(String,String) - adds header property
+	.charset(String) - adds Accept-Charset property value
+	.accept(String) - adds Accept property value
+	.basicAuth(String,String) - adds Authorization property with basic authorization
+	.body(byte[]/String/File) - sets body for POST method
+	.part(String,byte[]) - sets part for multi-part request
+	.executor(ExecutorService) - sets executor service for async request
+	.handler(Handler<T>) - sets handler to handle request response (default - Handles.OK)
+	.onSuccess(Callback<T>) - sets listener that will called on success 
+	.onFailure(Callback<T>) - sets listener that will called on failure 
+	.onAny(Callback<T>) - sets instance for failure and success
+	.sync() - send sync request and returns response
+	.async() - send async request and Future task
+	.build() - return request 
+```
+
 License
 =======
 
