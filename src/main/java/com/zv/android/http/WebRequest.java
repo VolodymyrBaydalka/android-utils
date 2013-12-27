@@ -73,25 +73,29 @@ public class WebRequest extends AbstractRequest
 			if (METHOD_POST.equals(this.method))
 			{
 				conn.setDoOutput(true);
-				OutputStream output = conn.getOutputStream();
 
 				if (bodyBytes != null)
 				{
+					OutputStream output = conn.getOutputStream();
 					output.write(bodyBytes);
+					output.close();
 				}
 				else if (bodyFile != null)
 				{
+					OutputStream output = conn.getOutputStream();
 					FileInputStream fileStream = new FileInputStream(bodyFile);
 					copy(fileStream, output, 2048);
 					fileStream.close();
+					output.close();
 				}
 				else if (bodyParts.size() != 0)
 				{
-					String boundary = writeMultiPart(output, bodyParts);
+					final String boundary = randomBoundary(30, 40);
 					conn.addRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+					OutputStream output = conn.getOutputStream();
+					writeMultiPart(output, bodyParts, boundary);
+					output.close();
 				}
-
-				output.close();
 			}
 
 			conn.connect();

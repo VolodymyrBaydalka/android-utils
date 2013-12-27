@@ -87,24 +87,27 @@ public abstract class AbstractRequest
 		}
 	}
 
-	protected static String writeMultiPart(OutputStream output, List<BodyPart> bodyParts) throws IOException
+	protected static void writeMultiPart(OutputStream output, List<BodyPart> bodyParts, String boundary) throws IOException
 	{
-		final String boundary = randomBoundary();
-
+		final String newLine = "\r\n";
 		OutputStreamWriter writer = new OutputStreamWriter(output, "UTF-8");
 
 		for (int i = 0; i < bodyParts.size(); i++)
 		{
 			BodyPart part = bodyParts.get(i);
 
-			writer.append("--").append(boundary).append("\r\n");
+			writer.append("--").append(boundary).append(newLine);
 			writer.append("Content-Disposition: form-data; name=\"").append(part.name).append("\";");
 
 			if (part.filename != null)
-				writer.append(part.filename);
+				writer.append("filename=\"").append(part.filename).append("\"");
 
-			writer.append("\r\n").append("Content-Type: ").append(part.type).append("\r\n").append("\r\n")
-					.flush();
+			writer.append(newLine);
+			
+			if(part.type != null)
+				writer.append("Content-Type: ").append(part.type).append(newLine);
+			
+			writer.append(newLine).flush();
 
 			if (part.bytes != null)
 			{
@@ -117,21 +120,19 @@ public abstract class AbstractRequest
 				fileStream.close();
 			}
 
-			writer.append("\r\n").flush();
+			writer.append(newLine).flush();
 		}
 
-		writer.append("--").append(boundary).append("--").append("\r\n").flush();
-		
-		return boundary;
+		writer.append("--").append(boundary).append("--").append(newLine).flush();
 	}
 	
-	protected static String randomBoundary()
+	protected static String randomBoundary(int from, int to)
 	{
 		Random rand = new Random();
 		String chars = "-_1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		StringBuilder builder = new StringBuilder();
 
-		for (int i = 0, l = 30 + rand.nextInt(10); i < l; i++)
+		for (int i = 0, l = from + rand.nextInt(to - from); i < l; i++)
 		{
 			builder.append(chars.charAt(rand.nextInt(chars.length())));
 		}
@@ -311,8 +312,14 @@ public abstract class AbstractRequest
 
 		public Builder<TRequest> part(String name, byte[] data, String type)
 		{
+			return part(name, null, data, type);
+		}
+
+		public Builder<TRequest> part(String name, String filename, byte[] data, String type)
+		{
 			BodyPart bodyPart = new BodyPart();
 			bodyPart.name = name;
+			bodyPart.filename = filename;
 			bodyPart.type = type;
 			bodyPart.bytes = data;
 			request.bodyParts.add(bodyPart);
