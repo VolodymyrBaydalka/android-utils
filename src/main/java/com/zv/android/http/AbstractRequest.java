@@ -358,9 +358,9 @@ public abstract class AbstractRequest
 			return this;
 		}
 
-		public AbstractRequest build()
+		public TRequest build()
 		{
-			AbstractRequest result = this.request;
+			TRequest result = this.request;
 			
 			StringBuilder urlBuilder = new StringBuilder(this.scheme).append("://").append(this.target);
 			
