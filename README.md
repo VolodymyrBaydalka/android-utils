@@ -45,6 +45,16 @@ WebRequest.builder()
 	.build() - return request 
 ```
 
+drawable package
+=============
+###exemple: 
+```java
+Drawable progressDrawable = getResources().getDrawable(R.drawable.bg_progress);
+ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressbar);
+progressBar.setProgressDrawable(new RadialClipDrawable(progressDrawable));
+progressBar.setProgress(65);
+```
+
 License
 =======
 
