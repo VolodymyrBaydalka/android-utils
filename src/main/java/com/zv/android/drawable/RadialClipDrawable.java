@@ -16,13 +16,17 @@
 
 package com.zv.android.drawable;
  
+import android.annotation.TargetApi;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.view.Gravity;
 
 public class RadialClipDrawable extends Drawable implements Drawable.Callback
 {
@@ -64,26 +68,17 @@ public class RadialClipDrawable extends Drawable implements Drawable.Callback
 
 	public void invalidateDrawable(Drawable who)
 	{
-		final Callback callback = getCallback();
-		
-		if (callback != null)
-			callback.invalidateDrawable(this);
+        invalidateSelf();
 	}
 
 	public void scheduleDrawable(Drawable who, Runnable what, long when)
 	{
-		final Callback callback = getCallback();
-
-		if (callback != null)
-			callback.scheduleDrawable(this, what, when);
+        scheduleSelf(what, when);
 	}
 
 	public void unscheduleDrawable(Drawable who, Runnable what)
 	{
-		final Callback callback = getCallback();
-		
-		if (callback != null)
-			callback.unscheduleDrawable(this, what);
+        unscheduleSelf(what);
 	}
 
 	@Override
@@ -112,7 +107,8 @@ public class RadialClipDrawable extends Drawable implements Drawable.Callback
 		mState.mDrawable.setAlpha(alpha);
 	}
 
-	@Override
+	@TargetApi(Build.VERSION_CODES.KITKAT)
+    @Override
 	public int getAlpha()
 	{
 		return mState.mDrawable.getAlpha();
