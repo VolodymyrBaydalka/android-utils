@@ -14,7 +14,7 @@ WebRequest.builder()
 	.onAny(new Callback<String>()
 		{ 
 			@Override
-			public void on(String value, Throwable error)
+			public void handle(String value, Throwable error)
 			{
 				Log.i(value);
 			}

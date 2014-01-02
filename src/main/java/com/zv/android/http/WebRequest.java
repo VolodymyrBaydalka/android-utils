@@ -55,6 +55,7 @@ public class WebRequest extends AbstractRequest
 	public <T> T sync()
 	{
 		T response = null;
+        Throwable error = null;
 
 		try
 		{
@@ -103,20 +104,23 @@ public class WebRequest extends AbstractRequest
 			InputStream stream = conn.getInputStream();
 			response = (T) this.responseHandler.handle(conn.getResponseCode(), conn.getResponseMessage(), conn.getHeaderFields(), stream);
 			stream.close();
-
-			if (this.onSuccess != null)
-			{
-				((Callback<T>) this.onSuccess).on(response, null);
-			}
 		}
 		catch (Exception e)
 		{
-			if (this.onFailure != null)
-			{
-				((Callback<T>) this.onSuccess).on(response, e);
-			}
+            error = e;
 		}
 
-		return response;
+        if(error == null)
+        {
+            if (this.onSuccess != null)
+                ((Callback<T>) this.onSuccess).handle(response, null);
+        }
+        else
+        {
+            if (this.onFailure != null)
+                ((Callback<T>) this.onFailure).handle(response, error);
+        }
+
+        return response;
 	}
 }

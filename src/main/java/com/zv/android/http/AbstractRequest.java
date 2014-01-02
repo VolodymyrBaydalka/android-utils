@@ -142,7 +142,7 @@ public abstract class AbstractRequest
 
 	public interface Callback<T>
 	{
-		void on(T value, Throwable error);
+		void handle(T value, Throwable error);
 	}
 
 	public interface Handler<T>

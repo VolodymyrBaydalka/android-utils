@@ -29,7 +29,7 @@ package com.zv.android.http;
  *		.handler(Handlers.STRING)
  *		.onAny(new WebRequest.Callback{@code <String>}() 
  *		{
- *			public void on(String value, Throwable error) 
+ *			public void handle(String value, Throwable error)
  *			{
  *				Log.i(value);
  *			}
