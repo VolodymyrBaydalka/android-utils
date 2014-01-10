@@ -55,6 +55,48 @@ progressBar.setProgressDrawable(new RadialClipDrawable(progressDrawable));
 progressBar.setProgress(65);
 ```
 
+content package
+=============
+###exemple: 
+```java
+class MyContract
+{
+	public final static String AUTHORITY = "test.authority"; 
+	
+	public interface User
+	{
+		public final static Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/user");
+		
+		@ContractFiled
+		public final static String NAME = "name";
+		
+		@ContractFiled
+		public final static String IMAGE = "image";
+	}
+}
+
+...
+
+class MyContentProvider extends extends SimpleContentProvider
+{
+	public CamomileProvider()
+	{
+		super(MyContract.class, MyContract.AUTHORITY, "database");
+	}
+}
+
+...
+
+ContentValues values = new ContentValues();
+		
+values.put(MyContract.User.NAME, "user1");
+values.put(MyContract.User.IMAGE, "image_url");
+
+Uri uri = getContentResolver().insert(MyContract.User.CONTENT_URI, values);
+
+```
+
+
 License
 =======
 
