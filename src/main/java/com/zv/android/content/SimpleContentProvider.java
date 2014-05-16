@@ -6,11 +6,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.text.TextUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -22,7 +24,9 @@ import java.util.List;
  */
 public class SimpleContentProvider extends ContentProvider
 {
-    protected Class<?> contractClass;
+    public static final String ARG_REPLACE = "replace";
+
+    protected Class<?>[] contractClasses;
     protected final UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     protected String databaseName;
     protected String[] tableNames;
@@ -31,13 +35,18 @@ public class SimpleContentProvider extends ContentProvider
 
     public SimpleContentProvider(Class<?> contractClass, String authority, String database)
     {
+        this(SimpleOpenHelper.findTableClasses(contractClass), authority, database);
+    }
+
+    public SimpleContentProvider(Class<?>[] contractClasses, String authority, String database)
+    {
         ArrayList<String> tablesList = new ArrayList<String>();
         ArrayList<String> typesList = new ArrayList<String>();
         int index = 0;
 
-        for (Class<?> tableClass : findTableClasses(contractClass))
+        for (Class<?> tableClass : contractClasses)
         {
-            String tableName = getTableName(tableClass);
+            String tableName = SimpleOpenHelper.getTableName(tableClass);
 
             uriMatcher.addURI(authority, tableName, index++);
             uriMatcher.addURI(authority, tableName + "/#", index++);
@@ -48,7 +57,7 @@ public class SimpleContentProvider extends ContentProvider
             tablesList.add(tableName);
         }
 
-        this.contractClass = contractClass;
+        this.contractClasses = contractClasses;
         this.tableNames = tablesList.toArray(new String[tablesList.size()]);
         this.types = typesList.toArray(new String[typesList.size()]);
         this.databaseName = database;
@@ -56,7 +65,8 @@ public class SimpleContentProvider extends ContentProvider
 
     @Override
     public boolean onCreate() {
-        openHelper = new SimpleOpenHelper(getContext(), this.contractClass, this.databaseName, null, 1);
+        openHelper = new SimpleOpenHelper(getContext(), this.contractClasses, this.databaseName, null,
+                SimpleOpenHelper.findVersion(this.contractClasses));
         return false;
     }
 
@@ -115,6 +125,35 @@ public class SimpleContentProvider extends ContentProvider
     }
 
     @Override
+    public int bulkInsert(Uri uri, ContentValues[] values) {
+        int len = values.length;
+        int match = uriMatcher.match(uri);
+        int conflictAlgorithm = SQLiteDatabase.CONFLICT_NONE;
+
+        if(match == UriMatcher.NO_MATCH)
+            throw new IllegalArgumentException("uri");
+
+        if("true".equals(uri.getQueryParameter(ARG_REPLACE)))
+            conflictAlgorithm = SQLiteDatabase.CONFLICT_REPLACE;
+
+        String tableName = tableNames[match / 2];
+        SQLiteDatabase db = openHelper.getWritableDatabase();
+
+        db.beginTransaction();
+
+        for (int i = 0; i < len; i++)
+            if(db.insertWithOnConflict(tableName, null, values[i], conflictAlgorithm) == -1)
+                break;
+
+        db.setTransactionSuccessful();
+        db.endTransaction();
+
+        getContext().getContentResolver().notifyChange(uri, null);
+
+        return len;
+    }
+
+    @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         int match = uriMatcher.match(uri);
 
@@ -138,89 +177,17 @@ public class SimpleContentProvider extends ContentProvider
 
         String tableName = tableNames[match / 2];
 
+        if(match % 2 == 1) {
+            if(TextUtils.isEmpty(selection))
+                selection = "_id=" + uri.getLastPathSegment();
+            else
+                selection = String.format("( %s ) AND ( _id=%s )", selection, uri.getLastPathSegment());
+        }
+
         int result = openHelper.getWritableDatabase()
                 .update(tableName, values, selection, selectionArgs);
         getContext().getContentResolver().notifyChange(uri, null);
 
         return result;
-    }
-
-    protected static List<Class<?>> findTableClasses(Class<?> contractClass)
-    {
-        ArrayList<Class<?>> result = new ArrayList<Class<?>>();
-
-        for (Class<?> clazz : contractClass.getDeclaredClasses())
-        {
-            result.add(clazz);
-        }
-
-        return result;
-    }
-
-    protected static boolean getColumnFromField(Field field, String[] results)
-    {
-        ContractFiled contractFiled = field.getAnnotation(ContractFiled.class);
-
-        if(contractFiled == null)
-            return false;
-
-        try
-        {
-            results[0] = (String)field.get(null);
-            results[1] = contractFiled.type();
-        }
-        catch (Exception e)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    protected static String getTableName(Class<?> tableClass)
-    {
-        return tableClass.getSimpleName().toLowerCase();
-    }
-
-    static class SimpleOpenHelper extends SQLiteOpenHelper
-    {
-        private Class<?> contractClass;
-
-        public SimpleOpenHelper(Context context, Class<?> contractClass, String name, SQLiteDatabase.CursorFactory factory, int version)
-        {
-            super(context, name, factory, version);
-
-            this.contractClass = contractClass;
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db)
-        {
-            String[] columnData = new String[2];
-
-            for (Class<?> tableClass : findTableClasses(this.contractClass))
-            {
-                StringBuilder qBuilder = new StringBuilder("CREATE TABLE ");
-
-                qBuilder.append(getTableName(tableClass));
-                qBuilder.append("(_ID INTEGER PRIMARY KEY");
-
-                for(Field field : tableClass.getDeclaredFields())
-                {
-                    if(getColumnFromField(field, columnData))
-                    {
-                        qBuilder.append(",").append(columnData[0]).append(" ").append(columnData[1]);
-                    }
-                }
-
-                qBuilder.append(")");
-                db.execSQL(qBuilder.toString());
-            }
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            onCreate(db);
-        }
     }
 }
