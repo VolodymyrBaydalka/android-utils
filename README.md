@@ -67,10 +67,10 @@ class MyContract
 	{
 		public final static Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/user");
 		
-		@ContractFiled
+		@ContractField
 		public final static String NAME = "name";
 		
-		@ContractFiled
+		@ContractField
 		public final static String IMAGE = "image";
 	}
 }
