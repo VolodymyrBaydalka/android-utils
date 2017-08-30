@@ -37,6 +37,7 @@ public class SimpleOpenHelper extends SQLiteOpenHelper
         for (Class<?> tableClass : this.contractClasses)
         {
             StringBuilder qBuilder = new StringBuilder("CREATE TABLE ");
+            StringBuilder keysBuilder = new StringBuilder("");
 
             qBuilder.append(getTableName(tableClass));
             qBuilder.append("(_id INTEGER PRIMARY KEY");
@@ -48,9 +49,12 @@ public class SimpleOpenHelper extends SQLiteOpenHelper
                     qBuilder.append(",").append(columnData[0]).append(" ").append(columnData[1]);
 
                     if(!TextUtils.isEmpty(columnData[2]))
-                        qBuilder.append(",FOREIGN KEY(").append(columnData[0]).append(") REFERENCES ").append(columnData[2]);
+                        keysBuilder.append(",FOREIGN KEY(").append(columnData[0]).append(") REFERENCES ").append(columnData[2]);
                 }
             }
+
+            if(keysBuilder.length() > 0)
+                qBuilder.append(keysBuilder);
 
             qBuilder.append(")");
             db.execSQL(qBuilder.toString());
@@ -98,7 +102,12 @@ public class SimpleOpenHelper extends SQLiteOpenHelper
 
     static String getTableName(Class<?> tableClass)
     {
-        return tableClass.getSimpleName().toLowerCase();
+        ContractTable contractTable = tableClass.getAnnotation(ContractTable.class);
+
+        if(contractTable == null || TextUtils.isEmpty(contractTable.name()))
+            return tableClass.getSimpleName().toLowerCase();
+
+        return contractTable.name();
     }
 
     static boolean getColumnFromField(Field field, String[] results)

@@ -28,7 +28,7 @@ public class CustomContract {
 
         public final static String ID = BaseColumns._ID;
 
-        @ContractField(foreignKey = "project(_id)")
+        @ContractField(foreignKey = "project(_id)", version = 2)
         public final static String PROJECT_ID = "project_id";
 
         @ContractField
