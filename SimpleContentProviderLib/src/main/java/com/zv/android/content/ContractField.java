@@ -20,4 +20,5 @@ public @interface ContractField {
 
     public String type() default TYPE_TEXT;
     public int version() default 1;
+    public String foreignKey() default "";
 }

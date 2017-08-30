@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
+import android.text.TextUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class SimpleOpenHelper extends SQLiteOpenHelper
     @Override
     public void onCreate(SQLiteDatabase db)
     {
-        String[] columnData = new String[2];
+        String[] columnData = new String[3];
 
         for (Class<?> tableClass : this.contractClasses)
         {
@@ -44,7 +45,10 @@ public class SimpleOpenHelper extends SQLiteOpenHelper
             {
                 if(getColumnFromField(field, columnData))
                 {
-                    qBuilder.append(",[").append(columnData[0]).append("] ").append(columnData[1]);
+                    qBuilder.append(",").append(columnData[0]).append(" ").append(columnData[1]);
+
+                    if(!TextUtils.isEmpty(columnData[2]))
+                        qBuilder.append(",FOREIGN KEY(").append(columnData[0]).append(") REFERENCES ").append(columnData[2]);
                 }
             }
 
@@ -108,6 +112,7 @@ public class SimpleOpenHelper extends SQLiteOpenHelper
         {
             results[0] = (String)field.get(null);
             results[1] = contractFiled.type();
+            results[2] = contractFiled.foreignKey();
         }
         catch (Exception e)
         {

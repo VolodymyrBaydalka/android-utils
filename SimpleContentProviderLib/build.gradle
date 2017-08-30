@@ -38,7 +38,7 @@ publish {
     userOrg = 'zvolodymyr'
     groupId = 'com.github.zvolodymyr'
     artifactId = 'SimpleContentProvider'
-    publishVersion = '0.0.5'
+    publishVersion = '0.0.6'
     desc = ''
     website = 'https://github.com/zVolodymyr/android-utils'
 }
